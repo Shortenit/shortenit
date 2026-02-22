@@ -1,0 +1,13 @@
+# Development overrides — builds images from local source
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile

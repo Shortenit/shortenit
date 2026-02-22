@@ -1,0 +1,83 @@
+# Base configuration — extend with docker-compose.dev.yml (local) or docker-compose.prod.yml (production)
+# Dev:  docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+# Prod: docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: shortenit-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-shortenit_db}
+      POSTGRES_USER: ${DB_USER:-shortenit}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-shortenit_password}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - shortenit-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-shortenit} -d ${DB_NAME:-shortenit_db}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Next.js Frontend
+  frontend:
+    container_name: shortenit-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL:
+    networks:
+      - shortenit-network
+    restart: unless-stopped
+
+  # Spring Boot Application
+  backend:
+    container_name: shortenit-backend
+    environment:
+      # Spring Profile (dev or prod)
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+
+      # Database Configuration
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-shortenit_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-shortenit}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-shortenit_password}
+
+      # Application Configuration
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      SERVER_PORT: 8080
+      JWT_SECRET: ${JWT_SECRET}
+
+      # JVM Options
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx512m -Xms256m}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID}
+      MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET}
+      PROTECTED_ADMIN_EMAIL: ${PROTECTED_ADMIN_EMAIL}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - shortenit-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  shortenit-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

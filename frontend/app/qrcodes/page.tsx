@@ -97,7 +97,7 @@ function QRCodesContent() {
             shortCode: link.code || link.shortCode,
             shortUrl:
               link.shortUrl ||
-              `${typeof window !== "undefined" ? window.location.origin : ""}/s/${link.code || link.shortCode}`,
+              `${typeof window !== "undefined" ? window.location.origin : ""}/s/${link.code || link.shortCode}  `,
             originalUrl: link.originalUrl,
           }));
           

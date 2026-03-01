@@ -59,7 +59,6 @@ interface AnalyticsItem {
     deviceStats: DeviceStats;
     topBrowsers: any[];
     topReferrers: any[];
-    recentClicks: any[];
 }
 
 const COLORS = ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444", "#6366f1"];

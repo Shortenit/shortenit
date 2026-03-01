@@ -124,7 +124,7 @@ export default function SettingsPage() {
 
     try {
         const token = localStorage.getItem("auth-token");
-        await fetch(`/api/users/me/api-keys/${id}`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/users/me/api-keys/${id}`, {
             method: "DELETE",
             headers: {
                 "Authorization": token ? `Bearer ${token}` : ""

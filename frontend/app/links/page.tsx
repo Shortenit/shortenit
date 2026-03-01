@@ -138,11 +138,22 @@ export default function LinksPage() {
       // 1. Validate URL and fetch Title via internal API
       const { title: fetchedTitle } = await api.links.validate(urlToShorten);
 
+      // Generate a fallback title from the URL if no title was fetched
+      const fallbackTitle = (() => {
+        try {
+          const urlObj = new URL(urlToShorten);
+          const path = urlObj.pathname.replace(/^\/|\/$/g, "");
+          return path ? `${urlObj.hostname}/${path}` : urlObj.hostname;
+        } catch {
+          return urlToShorten;
+        }
+      })();
+
       // 2. Proceed to shorten with the fetched title
       await api.links.create({
         originalUrl: urlToShorten,
         code: customAlias || undefined,
-        title: newUrlTitle || fetchedTitle || undefined,
+        title: newUrlTitle || fetchedTitle || fallbackTitle,
         expirationDays: expirationDays ? parseInt(expirationDays) : undefined,
       });
 
@@ -384,7 +395,7 @@ export default function LinksPage() {
           ) : (
               <div className="grid gap-4">
                 {displayedUrls.map((url) => (
-                    <Card key={url.shortCode} className="group relative transition-all duration-300 hover:border-primary/50 shadow-sm hover:shadow-md border-border bg-card">
+                    <Card key={url.shortCode} className="group relative transition-all duration-300 hover:border-primary/50 shadow-sm hover:shadow-md border-border bg-card overflow-hidden">
                         <CardContent>
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div className="flex-1 min-w-0">
@@ -397,7 +408,7 @@ export default function LinksPage() {
                                                 href={url.shortUrl}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="font-mono text-sm font-bold text-primary hover:underline hover:text-primary/80 truncate"
+                                                className="font-mono text-sm font-bold text-primary hover:underline hover:text-primary/80 truncate max-w-[200px] sm:max-w-none"
                                             >
                                                 {url.shortUrl.replace(/^https?:\/\//, '')}
                                             </a>
@@ -427,7 +438,7 @@ export default function LinksPage() {
                                     {url.owner && (
                                         <div className="text-xs text-muted-foreground flex items-center gap-1">
                                             <UserIcon className="w-3 h-3" />
-                                            <span>{url.owner.name} ({url.owner.email})</span>
+                                            <span className="truncate">{url.owner.name} ({url.owner.email})</span>
                                         </div>
                                     )}
                                 </div>

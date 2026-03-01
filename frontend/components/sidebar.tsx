@@ -48,27 +48,21 @@ export default function Sidebar() {
   return (
     <aside
       className={`hidden md:flex ${
-        collapsed ? "w-20" : "w-56"
+        collapsed ? "w-20 " : "w-56"
       } bg-background border-r border-border transition-[width] duration-300 flex flex-col`}
     >
       {/* Logo Section */}
-      <div className="p-2 border-border flex items-center justify-between">
+      <div className="px-4 pt-4 pb-2 border-border flex items-center justify-between">
         <div
           className={`flex items-center gap-2 ${
             collapsed ? "justify-center w-full" : ""
           }`}
         >
-          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-            <Image
-              src="/shortenit.svg"
-              className="w-5 h-5"
-              width={20}
-              height={20}
-              alt="Logo"
-            />
+          <div className="w-8 h-8 bg-gradient-to-br p-2 from-primary via-blue-600 to-violet-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md shadow-primary/25">
+            <Link2 className="w-4 h-4 text-white" />
           </div>
           {!collapsed && (
-            <span className="font-bold text-lg text-foreground">Shortenit</span>
+            <span className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/90">Shortenit</span>
           )}
         </div>
       </div>

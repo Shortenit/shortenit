@@ -112,6 +112,17 @@ export default function Home() {
 
       const { title: fetchedTitle } = await validationRes.json();
 
+      // Generate a fallback title from the URL if no title was fetched
+      const fallbackTitle = (() => {
+        try {
+          const urlObj = new URL(urlToShorten);
+          const path = urlObj.pathname.replace(/^\/|\/$/g, "");
+          return path ? `${urlObj.hostname}/${path}` : urlObj.hostname;
+        } catch {
+          return urlToShorten;
+        }
+      })();
+
       // 2. Shorten (using correct POST /api/urls endpoint)
       const response = await fetch(
         `/api/urls`,
@@ -123,7 +134,7 @@ export default function Home() {
           },
           body: JSON.stringify({
             originalUrl: urlToShorten,
-            title: title || fetchedTitle || undefined,
+            title: title || fetchedTitle || fallbackTitle,
           }),
         }
       );

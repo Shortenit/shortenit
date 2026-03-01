@@ -1,12 +1,9 @@
 import { Url, LinkDetails, AnalyticsData, User } from "./types";
 
-// On the client (browser), always use relative paths so the Next.js proxy handles
-// routing to the backend. Using the absolute backend URL from the browser would
-// bypass the proxy and trigger CSP violations.
 const API_BASE_URL = typeof window === "undefined"
   ? (process.env.NEXT_PUBLIC_API_BASE_URL || "")
   : "";
-
+  
 type RequestMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 interface RequestOptions {

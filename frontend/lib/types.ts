@@ -63,14 +63,6 @@ export interface AnalyticsData {
     };
     topBrowsers: Array<{ browser: string; clicks: number; percentage: number }>;
     topReferrers: Array<any>;
-    recentClicks: Array<{
-        timestamp: string;
-        country: string;
-        city: string;
-        deviceType: string;
-        browser: string;
-        referrer: string | null;
-    }>;
 }
 
 export type Role = "USER" | "ADMIN";

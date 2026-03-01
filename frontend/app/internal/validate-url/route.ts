@@ -1,5 +1,49 @@
 import { NextResponse } from 'next/server';
 
+// Check if a URL is a YouTube video URL
+function getYouTubeVideoUrl(url: string): string | null {
+  try {
+    const urlObj = new URL(url);
+    if (
+      (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') &&
+      urlObj.pathname === '/watch' &&
+      urlObj.searchParams.has('v')
+    ) {
+      return url;
+    }
+    if (urlObj.hostname === 'youtu.be' && urlObj.pathname.length > 1) {
+      return `https://www.youtube.com/watch?v=${urlObj.pathname.slice(1)}`;
+    }
+    if (
+      (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') &&
+      urlObj.pathname.startsWith('/shorts/')
+    ) {
+      return url;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Try YouTube oEmbed API for reliable title extraction
+async function fetchYouTubeTitle(videoUrl: string): Promise<string> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`;
+    const response = await fetch(oembedUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (response.ok) {
+      const data = await response.json();
+      return data.title || "";
+    }
+    return "";
+  } catch {
+    return "";
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const { url } = await request.json();
@@ -8,7 +52,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ valid: false, message: "URL is required" }, { status: 400 });
     }
 
-    // Attempt to fetch the URL to validate it and get the title
+    // For YouTube URLs, use the oEmbed API for reliable title extraction
+    const youtubeUrl = getYouTubeVideoUrl(url);
+    if (youtubeUrl) {
+      const ytTitle = await fetchYouTubeTitle(youtubeUrl);
+      return NextResponse.json({ valid: true, title: ytTitle });
+    }
+
+    // For all other URLs, fetch the page and extract the title
     let controller: AbortController;
     let timeoutId: NodeJS.Timeout | undefined;
 
@@ -33,13 +84,32 @@ export async function POST(request: Request) {
 
       const html = await response.text();
       let title = "";
+
+      // 1. Try <title> tag
       const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-      
       if (titleMatch && titleMatch[1]) {
         const rawTitle = titleMatch[1].trim();
         // Filter out common "bot protection" or "loading" titles
         if (!/^(Just a moment|Access denied|Security Check|Attention Required|Loading|Please wait)/i.test(rawTitle)) {
              title = rawTitle;
+        }
+      }
+
+      // 2. If title is empty or too generic (single word like just the site name), try og:title
+      if (!title || title.split(/\s+/).length <= 1) {
+        const ogMatch = html.match(/<meta\s+(?:property|name)=["']og:title["']\s+content=["']([^"']+)["']/i)
+                      || html.match(/<meta\s+content=["']([^"']+)["']\s+(?:property|name)=["']og:title["']/i);
+        if (ogMatch && ogMatch[1]) {
+          title = ogMatch[1].trim();
+        }
+      }
+
+      // 3. Still empty? Try twitter:title
+      if (!title) {
+        const twitterMatch = html.match(/<meta\s+(?:property|name)=["']twitter:title["']\s+content=["']([^"']+)["']/i)
+                           || html.match(/<meta\s+content=["']([^"']+)["']\s+(?:property|name)=["']twitter:title["']/i);
+        if (twitterMatch && twitterMatch[1]) {
+          title = twitterMatch[1].trim();
         }
       }
 
@@ -53,3 +123,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ valid: false, message: "Internal server error" }, { status: 500 });
   }
 }
+

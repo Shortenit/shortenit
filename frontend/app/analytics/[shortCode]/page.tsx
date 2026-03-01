@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, MousePointer2, Link as LinkIcon, Monitor, Globe, Smartphone, Chrome, Clock, Calendar, MapPin } from "lucide-react";
+import { ArrowLeft, MousePointer2, Link as LinkIcon, Monitor, Globe, Smartphone, Chrome, Calendar, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { 
@@ -26,15 +26,7 @@ interface AnalyticsViewState {
     clicksByBrowser: Array<{ browser: string; count: number; percentage: number }>;
     clicksByDate: Array<{ date: string; count: number }>;
     clicksByHour: Array<{ hour: string; count: number }>;
-    recentClicks: Array<{
-        country: string;
-        city: string;
-        device: string;
-        browser: string;
-        os?: string;
-        clickedAt: string;
-        referrer: string | null;
-    }>;
+
 }
 
 // Interface matching the new API response structure
@@ -93,14 +85,7 @@ export default function LinkAnalytics() {
                     hour: `${hour}:00`,
                     count
                 })).sort((a, b) => parseInt(a.hour) - parseInt(b.hour)),
-                recentClicks: data.recentClicks?.map(rc => ({
-                    country: rc.country,
-                    city: rc.city,
-                    device: rc.deviceType,
-                    browser: rc.browser,
-                    clickedAt: rc.timestamp,
-                    referrer: rc.referrer
-                })) || []
+
             };
 
             setAnalytics(mappedData);
@@ -376,50 +361,7 @@ export default function LinkAnalytics() {
                         </Card>
                     </div>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <Clock className="w-5 h-5" />
-                                Recent Activity
-                            </CardTitle>
-                            <CardDescription>Latest clicks on your link</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {analytics.recentClicks.length > 0 ? (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm text-left">
-                                        <thead className="text-muted-foreground border-b">
-                                            <tr>
-                                                <th className="font-medium py-3 pr-4">Location</th>
-                                                <th className="font-medium py-3 pr-4">Device</th>
-                                                <th className="font-medium py-3 pr-4">Browser</th>
-                                                <th className="font-medium py-3 pr-4">Time</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y">
-                                            {analytics.recentClicks.map((click, index) => (
-                                                <tr key={index} className="group hover:bg-muted/50 transition-colors">
-                                                    <td className="py-3 pr-4">
-                                                        <div className="flex items-center gap-2">
-                                                            <Globe className="w-3 h-3 text-muted-foreground" />
-                                                            {click.city}, {click.country}
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-3 pr-4">{click.device}</td>
-                                                    <td className="py-3 pr-4">{click.browser}</td>
-                                                    <td className="py-3 text-muted-foreground whitespace-nowrap">
-                                                        {new Date(click.clickedAt).toLocaleString()}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ) : (
-                                <div className="py-12 text-center text-muted-foreground">No recent clicks recorded</div>
-                            )}
-                        </CardContent>
-                    </Card>
+
                 </div>
             </div>
     );
